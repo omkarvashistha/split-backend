@@ -64,16 +64,80 @@ exports.createUser = async(req,res) => {
     }
 }
 
+exports.login = async(req,res) => {
+    try {
+        const userData = req.body;
+        const userCheckResponse = await helper.checkUserCredentials(userData.email,userData.password);
+
+        if(userCheckResponse){
+            res.json({
+                code : 100
+            })
+        } else {
+            res.json({
+                code : 101
+            })
+        }
+        return;
+    } catch (error) {
+        res.json({
+            error : error
+        })
+        return;
+    }
+}
+
 
 /*****************Group APIs**************** */
 
 exports.addGroup = async(req,res) => {
     try {
-        await Groups.add(data);
-        console.log(data);
+        const userData = req.body;
+        const email = userData.email;
+        const GName = userData.gName;
+
+        const UserId = await helper.getUserIdFromEmail(email);
+
+        const GId = await helper.createGroupId();
+        const GroupMembers = [UserId];
+        const createdOn = helper.getFullDate();
+        const groupData = {
+            GId : GId,
+            GName : GName,
+            GroupOwner : UserId,
+            GroupMembers : GroupMembers,
+            CreatedOn : createdOn
+        }
+
+        const GroupAddingRes = await Groups.add(groupData);
+
+        if(!GroupAddingRes){
+            res.json({
+                code : "101"
+            });
+            return;
+        }
+
+        const GUMId = await helper.getGroupUserMappingId();
+        const GIds = [GId];
+        const GroupUserMappingData = {
+            GUMId : GUMId,
+            UId : UserId,
+            GIds : GIds
+        };
+        
+        const GroupUserMappingRes = await userGroupMapping.add(GroupUserMappingData);
+
+        if(!GroupUserMappingRes){
+            res.json({
+                code : "101"
+            });
+            return;
+        }
+
         res.json({
-            msg : "Group added"
-        })
+            code : "100"
+        });
     } catch (error) {
         res.json({
             error : error
@@ -81,7 +145,35 @@ exports.addGroup = async(req,res) => {
     }
 }
 
+exports.getGroups = async(req,res) => {
+    try {
+        const email = req.params.email;
+        const UId = await helper.getUserIdFromEmail(email);
 
+        var groups = [];
+        const querySnapshot = await userGroupMapping.where("UId","==",UId).get();
+        querySnapshot.docs.forEach(element => {
+            groups.push(element.data().GIds[0]);
+        });
+
+        console.log(groups);
+        var groupsData = [];
+
+        for(let i=0;i<groups.length;i++){
+            const GId = groups[i];
+            const groupData = await helper.getGroupDataFromId(GId);
+            groupsData.push(groupData);
+        }
+
+        res.json({
+            code : 100,
+            groupsData : groupsData
+        });
+
+    } catch (error) {
+        throw error;
+    }
+}
 
 
 exports.invalid = async(req,res,next)=>{
