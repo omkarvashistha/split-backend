@@ -79,9 +79,12 @@ exports.getGroupUserMappingId = async()=>{
 
 exports.getGroupDataFromId = async(GId) => {
     try {
-        const  groupData = ((await Groups.where("GId","==",GId).get()).docs[0].data());
-        console.log(groupData);
-        return groupData;
+        const  groupData = ((await Groups.where("GId","==",GId).get()));
+        if(!groupData.empty) {
+            const doc = groupData.docs[0];
+            return doc.data();
+        }
+        return;
     } catch (error) {
         throw error;
     }
