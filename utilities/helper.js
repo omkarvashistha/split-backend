@@ -48,6 +48,32 @@ exports.getUserIdFromEmail = async(email)=>{
     }
 }
 
+/**
+ * Function to get the username (UName) from the User collection by UId.
+ * @param {string} userId - The UId of the user to fetch the username for.
+ * @returns {Promise<string|null>} - The username (UName) if found, otherwise null.
+ */
+exports.getUserNameFromId = async(userId) => {
+    try {
+        // Query the User collection for a document where UId matches userId
+        const userQuerySnapshot = await Users.where('UId', '==', userId).get();
+
+        if (userQuerySnapshot.empty) {
+            console.log(`No user found with UId ${userId}.`);
+            return null; // No user found
+        }
+
+        // Assuming UId is unique and only one document should match
+        const userDoc = userQuerySnapshot.docs[0];
+        return userDoc.data().UName; // Return the UName
+    } catch (err) {
+        console.error(`Error fetching username for UId ${userId}:`, err);
+        return null; // In case of error, return null
+    }
+}
+
+/********************************* GROUP APIs ************************* */
+
 exports.createGroupId = async()=>{
     try {
         const querySnapshot = await Groups.get();

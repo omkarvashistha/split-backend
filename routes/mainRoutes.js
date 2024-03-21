@@ -16,5 +16,11 @@ router.post('/signup',mainController.createUser);
 /************Group API Routes************/
 router.get("/:email/getGroups",mainController.getGroups);
 router.post('/addGroup',mainController.addGroup);
+
+
+/*Transaction APIs */
+router.post("/addTransaction",mainController.addTransaction);
+router.post("/getTransactionForGroup",mainController.getTransactionForGroup);
+
 router.all('*',mainController.invalid);
 module.exports = router
