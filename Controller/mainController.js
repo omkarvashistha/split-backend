@@ -147,6 +147,7 @@ exports.addGroup = async(req,res) => {
 exports.getGroups = async(req,res) => {
     try {
         const email = req.params.email;
+        console.log("inside");
         const UId = await helper.getUserIdFromEmail(email);
 
         var groups = [];
