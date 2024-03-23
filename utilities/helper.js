@@ -42,7 +42,8 @@ exports.getUserIdFromEmail = async(email)=>{
         if(userIdRes.empty){
             return null;
         }
-        return userIdRes.docs[0].data().UId;
+        const userDoc = userIdRes.docs[0];
+        return userDoc.data().UId || null;
     } catch (error) {
         throw error;
     }

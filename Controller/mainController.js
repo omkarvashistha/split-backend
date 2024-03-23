@@ -88,14 +88,35 @@ exports.login = async(req,res) => {
     }
 }
 
+exports.getNameFromId = async(req,res) => {
+    try {
+        const name = await helper.getUserNameFromId(req.body.UId);
+        if(name){
+            return res.status(200).json({
+                code : 100,
+                UName : name
+            });
+        }
+        res.status(201).json({
+            code : 101,
+            UName : name
+        })
+    } catch (error) {
+        res.json(404).json({
+            code : 102
+        })
+    }
+}
+
 
 /*****************Group APIs**************** */
 
 exports.addGroup = async(req,res) => {
     try {
         const {email,GName} = req.body;
-
+        console.log("GName -> ",GName);
         const UserId = await helper.getUserIdFromEmail(email);
+        if(!UserId) return res.json(400).status({code  : 101});
         const groupRef = Groups.doc();
         const GId = groupRef.id;
         const GroupMembers = [UserId];
@@ -138,8 +159,9 @@ exports.addGroup = async(req,res) => {
             code : "100"
         });
     } catch (error) {
+        console.log(error);
         res.json({
-            error : error
+            error : error.message
         })
     }
 }
@@ -153,7 +175,7 @@ exports.getGroups = async(req,res) => {
         var groups = [];
         const querySnapshot = await userGroupMapping.where("UId","==",UId).get();
         querySnapshot.docs.forEach(element => {
-            groups.push(element.data().GIds[0]);
+            element && groups.push(element.data().GIds[0]);
         });
 
         console.log(groups);
@@ -308,7 +330,8 @@ exports.getTransactionForGroup = async (req, res) => {
         console.log(finalListObject);
         if(finalList.size === 0){
             return res.status(201).json({
-                code : 101
+                code : 101,
+                finalList : finalListObject
             });
         } else {
             return res.status(200).json({
