@@ -14,6 +14,8 @@ router.all('/',() => {
 router.post('/login',mainController.login);     
 router.post('/signup',mainController.createUser);
 router.post('/getNameFromId',mainController.getNameFromId);
+router.post('/getFriends',mainController.getFriends);
+router.post('/addFriend',mainController.addFriend);
 
 /************Group API Routes************/
 router.get("/:email/getGroups",mainController.getGroups);
