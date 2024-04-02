@@ -296,8 +296,13 @@ exports.getGroups = async(req,res) => {
 
 exports.addTransaction = async(req,res) => {
     try{
-        const { amount, users, paidBy, GId } = req.body; // Extract GId from the request
+        let { amount, users, paidBy, GId, title } = req.body; // Extract GId from the request
+        console.log(req.body);
         const date = await helper.getFullDate(); // Get the current date in the desired format
+        const paidById  = await helper.getUserIdFromEmail(paidBy);
+
+        // Convert amount to a number if it's a valid numeric string
+        amount = typeof amount === 'string' ? parseFloat(amount) : amount;
 
         // Data validation
         if (typeof amount !== 'number' || !Array.isArray(users) || !paidBy || !GId) {
@@ -309,28 +314,44 @@ exports.addTransaction = async(req,res) => {
         const TId = transactionRef.id;
         await transactionRef.set({
             TId,
+            title,
             amount,
             users,
-            paidBy,
+            paidById,
             date
         });
 
         // Update the Groups collection with the new transaction ID
         let transactionComplete = false;
         await firestore.runTransaction(async (transaction) => {
-            // Query for the document with the matching GId
             const groupQuerySnapshot = await transaction.get(Groups.where('GId', '==', GId));
-
             if (groupQuerySnapshot.empty) {
                 console.log(`No group found with GId ${GId}.`);
                 transactionComplete = false;
             } else {
-                // Assuming GId is unique and only one document should match
                 const groupDoc = groupQuerySnapshot.docs[0];
-                const transactions = groupDoc.data().transactions || [];
-                transactions.push(TId);
+                const groupData = groupDoc.data();
+                const groupMembers = groupData.GroupMembers || [];
+                const transactionUsers = users.map(user => user.userId);
 
-                // Update the document with the new transactions array
+                // Check for new group members in transaction users and add them
+                let updateNeeded = false;
+                users.forEach(userObject => {
+                    let userId = Object.keys(userObject)[0]; // Accessing the UserId property from the object
+                    console.log("userId ->", userId);
+
+                    if (!groupMembers.includes(userId)) {
+                        groupMembers.push(userId);
+                        updateNeeded = true;
+                    }
+                });
+
+                if (updateNeeded) {
+                    transaction.update(groupDoc.ref, { GroupMembers: groupMembers });
+                }
+
+                const transactions = groupData.transactions || [];
+                transactions.push(TId);
                 transaction.update(groupDoc.ref, { transactions });
                 transactionComplete = true;
             }
