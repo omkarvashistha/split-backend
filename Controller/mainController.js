@@ -394,10 +394,8 @@ exports.getTransactionForGroup = async (req, res) => {
         const groupDoc = groupQuerySnapshot.docs[0];
         const transactionIds = groupDoc.data().transactions || [];
         const finalList = new Map();
-        console.log("Transaction IDs: ", transactionIds);
-        // Iterate over each transaction ID to process transaction data
+
         for (const transactionId of transactionIds) {
-            console.log("Processing transactionId -> ", transactionId);
             const transactionRef = Transactions.doc(transactionId);
             const transactionDoc = await transactionRef.get();
             
@@ -405,12 +403,12 @@ exports.getTransactionForGroup = async (req, res) => {
                 
                 const transactionData = transactionDoc.data();
                 const users = transactionData.users;
-                const paidBy = transactionData.paidBy;
-                console.log(`Transaction ${transactionId} Users:`, users);
-                
+                const paidBy = transactionData.paidById;
+                console.log("paidby -> ",paidBy);
                 if(paidBy === UId) {
                     users.forEach(user => {
                         const key = Object.keys(user)[0];
+                        console.log("Key ->",key);
                         const value = user[key];
                         if(key !== UId){
                             if(finalList.has(key)) {
@@ -441,17 +439,17 @@ exports.getTransactionForGroup = async (req, res) => {
             }  
         }
         
-        const finalListObject = Object.fromEntries(finalList);
-        console.log(finalListObject);
+        const finalListArray = Array.from(finalList, ([id, value]) => ({ id, value }));
+        console.log("finalListArray -> ",finalListArray);
         if(finalList.size === 0){
             return res.status(201).json({
                 code : 101,
-                finalList : finalListObject
+                finalList : finalListArray
             });
         } else {
             return res.status(200).json({
                 code : 100,
-                finalList : finalListObject
+                finalList : finalListArray
             });
         }
     } catch (err) {
