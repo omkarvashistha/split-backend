@@ -299,7 +299,6 @@ exports.addTransaction = async(req,res) => {
         let { amount, users, paidBy, GId, title } = req.body; // Extract GId from the request
         console.log(req.body);
         const date = await helper.getFullDate(); // Get the current date in the desired format
-        const paidById  = await helper.getUserIdFromEmail(paidBy);
 
         // Convert amount to a number if it's a valid numeric string
         amount = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -312,6 +311,7 @@ exports.addTransaction = async(req,res) => {
         // Create and set transaction in the Transactions collection
         const transactionRef = Transactions.doc();
         const TId = transactionRef.id;
+        const paidById = paidBy;
         await transactionRef.set({
             TId,
             title,
@@ -404,7 +404,7 @@ exports.getTransactionForGroup = async (req, res) => {
                 const transactionData = transactionDoc.data();
                 const users = transactionData.users;
                 const paidBy = transactionData.paidById;
-                console.log("paidby -> ",paidBy);
+                console.log("paidBy -> ",paidBy);
                 if(paidBy === UId) {
                     users.forEach(user => {
                         const key = Object.keys(user)[0];
@@ -422,18 +422,17 @@ exports.getTransactionForGroup = async (req, res) => {
                     users.forEach(user => {
                         const key = Object.keys(user)[0];
                         const value = user[key];
-                        if(key == UId) {
+                        if(key === UId) {
                             if(finalList.has(paidBy)){
                                 finalList.set(paidBy, finalList.get(paidBy) - value);
                             } else {
                                 finalList.set(paidBy,-value);
                             }
-                            //console.log("Not paid ->",finalList.get(key));
+                            console.log("Not paid ->",finalList.get(key));
                         }
 
                     });
                 }
-                console.log("Here ->");
             } else {
                 console.log(`Transaction document ${transactionId} does not exist.`);
             }  
